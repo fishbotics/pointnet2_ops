@@ -1,3 +1,22 @@
+# [tool.poetry]
+# name = "pointnet2_ops"
+# version = "3.0.0"
+# description = "CUDA extensions for Pointnet++"
+# authors = ["afishman <afishman@cs.washington.edu>"]
+# license = "MIT"
+#
+# [tool.poetry.dependencies]
+# python = "^3.7.1"
+#
+# [tool.poetry.dev-dependencies]
+#
+# [tool.poetry.build]
+# generate-setup-file = false
+# script = "build.py"
+#
+
 [build-system]
-requires = ['setuptools', 'torch']
-build-backend = 'setuptools.build_meta'
+# requires = ["poetry-core>=1.0.0", "torch>=1.8"]
+# build-backend = "poetry.core.masonry.api"
+requires = ["setuptools", "wheel", "torch"]
+build-backend = "setuptools.build_meta"
