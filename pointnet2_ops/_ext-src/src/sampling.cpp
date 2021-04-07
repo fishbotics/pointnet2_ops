@@ -15,7 +15,7 @@ void furthest_point_sampling_kernel_wrapper(int b, int n, int m,
 at::Tensor gather_points(at::Tensor points, at::Tensor idx) {
   CHECK_CONTIGUOUS(points);
   CHECK_CONTIGUOUS(idx);
-  CHECK_IS_FLOAT(points);
+  CHECK_IS_FLOAT_OR_HALF(points);
   CHECK_IS_INT(idx);
 
   if (points.is_cuda()) {
@@ -41,7 +41,7 @@ at::Tensor gather_points_grad(at::Tensor grad_out, at::Tensor idx,
                               const int n) {
   CHECK_CONTIGUOUS(grad_out);
   CHECK_CONTIGUOUS(idx);
-  CHECK_IS_FLOAT(grad_out);
+  CHECK_IS_FLOAT_OR_HALF(grad_out);
   CHECK_IS_INT(idx);
 
   if (grad_out.is_cuda()) {
@@ -65,7 +65,7 @@ at::Tensor gather_points_grad(at::Tensor grad_out, at::Tensor idx,
 }
 at::Tensor furthest_point_sampling(at::Tensor points, const int nsamples) {
   CHECK_CONTIGUOUS(points);
-  CHECK_IS_FLOAT(points);
+  CHECK_IS_FLOAT_OR_HALF(points);
 
   at::Tensor output =
       torch::zeros({points.size(0), nsamples},

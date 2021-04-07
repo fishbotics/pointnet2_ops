@@ -12,7 +12,7 @@ void group_points_grad_kernel_wrapper(int b, int c, int n, int npoints,
 at::Tensor group_points(at::Tensor points, at::Tensor idx) {
   CHECK_CONTIGUOUS(points);
   CHECK_CONTIGUOUS(idx);
-  CHECK_IS_FLOAT(points);
+  CHECK_IS_FLOAT_OR_HALF(points);
   CHECK_IS_INT(idx);
 
   if (points.is_cuda()) {
@@ -38,7 +38,7 @@ at::Tensor group_points(at::Tensor points, at::Tensor idx) {
 at::Tensor group_points_grad(at::Tensor grad_out, at::Tensor idx, const int n) {
   CHECK_CONTIGUOUS(grad_out);
   CHECK_CONTIGUOUS(idx);
-  CHECK_IS_FLOAT(grad_out);
+  CHECK_IS_FLOAT_OR_HALF(grad_out);
   CHECK_IS_INT(idx);
 
   if (grad_out.is_cuda()) {

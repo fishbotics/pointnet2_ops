@@ -18,8 +18,9 @@
               #x " must be an int tensor");           \
   } while (0)
 
-#define CHECK_IS_FLOAT(x)                               \
+#define CHECK_IS_FLOAT_OR_HALF(x)                       \
   do {                                                  \
-    AT_ASSERT(x.scalar_type() == at::ScalarType::Float, \
+    AT_ASSERT(x.scalar_type() == at::ScalarType::Float  \
+              || x.scalar_type == at::ScalarType::Half, \
               #x " must be a float tensor");            \
   } while (0)
