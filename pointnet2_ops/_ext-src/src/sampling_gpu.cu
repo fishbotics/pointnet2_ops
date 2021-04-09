@@ -68,7 +68,7 @@ __global__ void gather_points_grad_kernel(
   }
 }
 
-void gather_points_grad_kernel_wrapper(
+at::Tensor gather_points_grad_kernel_wrapper(
     int b,
     int c,
     int n,
@@ -131,7 +131,7 @@ __global__ void furthest_point_sampling_kernel(
   __syncthreads();
   for (int j = 1; j < m; j++) {
     int besti = 0;
-    float best = -1;
+    scalar_t best = -1;
     scalar_t x1 = dataset[old * 3 + 0];
     scalar_t y1 = dataset[old * 3 + 1];
     scalar_t z1 = dataset[old * 3 + 2];
