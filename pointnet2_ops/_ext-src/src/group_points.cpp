@@ -1,62 +1,51 @@
 #include "group_points.h"
 #include "utils.h"
 
-void group_points_kernel_wrapper(int b, int c, int n, int npoints, int nsample,
-                                 const float *points, const int *idx,
-                                 float *out);
+at::Tensor group_points_kernel_wrapper(
+    int b,
+    int c,
+    int n,
+    int npoints,
+    int nsample,
+    const at::Tensor points,
+    const at::Tensor idx);
 
-void group_points_grad_kernel_wrapper(int b, int c, int n, int npoints,
-                                      int nsample, const float *grad_out,
-                                      const int *idx, float *grad_points);
+at::Tensor group_points_grad_kernel_wrapper(
+    int b,
+    int c,
+    int n,
+    int npoints,
+    int nsample,
+    const at::Tensor grad_out,
+    const at::Tensor idx);
 
 at::Tensor group_points(at::Tensor points, at::Tensor idx) {
-  CHECK_CONTIGUOUS(points);
-  CHECK_CONTIGUOUS(idx);
-  CHECK_IS_FLOAT_OR_HALF(points);
+  CHECK_INPUT(points);
+  CHECK_INPUT(idx);
   CHECK_IS_INT(idx);
 
-  if (points.is_cuda()) {
-    CHECK_CUDA(idx);
-  }
-
-  at::Tensor output =
-      torch::zeros({points.size(0), points.size(1), idx.size(1), idx.size(2)},
-                   at::device(points.device()).dtype(at::ScalarType::Float));
-
-  if (points.is_cuda()) {
-    group_points_kernel_wrapper(points.size(0), points.size(1), points.size(2),
-                                idx.size(1), idx.size(2),
-                                points.data_ptr<float>(), idx.data_ptr<int>(),
-                                output.data_ptr<float>());
-  } else {
-    AT_ASSERT(false, "CPU not supported");
-  }
-
-  return output;
+  return group_points_kernel_wrapper(
+    points.size(0),
+    points.size(1),
+    points.size(2),
+    idx.size(1),
+    idx.size(2),
+    points,
+    idx);
 }
 
 at::Tensor group_points_grad(at::Tensor grad_out, at::Tensor idx, const int n) {
-  CHECK_CONTIGUOUS(grad_out);
-  CHECK_CONTIGUOUS(idx);
-  CHECK_IS_FLOAT_OR_HALF(grad_out);
+  CHECK_INPUT(grad_out);
+  CHECK_INPUT(idx);
   CHECK_IS_INT(idx);
+  // Maybe should also check if grad_out is double/float/half?
 
-  if (grad_out.is_cuda()) {
-    CHECK_CUDA(idx);
-  }
-
-  at::Tensor output =
-      torch::zeros({grad_out.size(0), grad_out.size(1), n},
-                   at::device(grad_out.device()).dtype(at::ScalarType::Float));
-
-  if (grad_out.is_cuda()) {
-    group_points_grad_kernel_wrapper(
-        grad_out.size(0), grad_out.size(1), n, idx.size(1), idx.size(2),
-        grad_out.data_ptr<float>(), idx.data_ptr<int>(),
-        output.data_ptr<float>());
-  } else {
-    AT_ASSERT(false, "CPU not supported");
-  }
-
-  return output;
+  return group_points_grad_kernel_wrapper(
+      grad_out.size(0),
+      grad_out.size(1),
+      n,
+      idx.size(1),
+      idx.size(2),
+      grad_out,
+      idx);
 }
