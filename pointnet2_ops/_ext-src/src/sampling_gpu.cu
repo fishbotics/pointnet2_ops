@@ -228,7 +228,7 @@ at::Tensor furthest_point_sampling_kernel_wrapper(
                    at::device(points.device()).dtype(at::ScalarType::Int));
 
   at::Tensor tmp =
-      torch::full({points.size(0), points.size(1)}, 1e10,
+      torch::full({points.size(0), points.size(1)}, 6e5,
                   at::device(points.device()).dtype(points.scalar_type()));
 
   AT_DISPATCH_FLOATING_TYPES_AND_HALF(
