@@ -227,8 +227,9 @@ at::Tensor furthest_point_sampling_kernel_wrapper(
       torch::zeros({points.size(0), m},
                    at::device(points.device()).dtype(at::ScalarType::Int));
 
+  // Setting a number close to the maximum a half can be
   at::Tensor tmp =
-      torch::full({points.size(0), points.size(1)}, 6e5,
+      torch::full({points.size(0), points.size(1)}, 65e3,
                   at::device(points.device()).dtype(points.scalar_type()));
 
   AT_DISPATCH_FLOATING_TYPES_AND_HALF(
