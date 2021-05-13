@@ -14,7 +14,7 @@ def build_shared_mlp(mlp_spec: List[int], bn: bool = True):
         )
         if bn:
             layers.append(nn.BatchNorm2d(mlp_spec[i]))
-        layers.append(nn.ReLU(True))
+        layers.append(nn.LeakyReLU(inplace=True))
 
     return nn.Sequential(*layers)
 
