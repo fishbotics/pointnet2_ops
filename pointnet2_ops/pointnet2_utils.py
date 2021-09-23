@@ -288,10 +288,15 @@ class QueryAndGroup(nn.Module):
         Maximum number of features to gather in the ball
     """
 
-    def __init__(self, radius, nsample, use_xyz=True):
+    def __init__(self, radius, nsample, use_xyz=True, normalize_xyz=True):
         # type: (QueryAndGroup, float, int, bool) -> None
         super(QueryAndGroup, self).__init__()
-        self.radius, self.nsample, self.use_xyz = radius, nsample, use_xyz
+        self.radius, self.nsample, self.use_xyz, self.normalize_xyz = (
+            radius,
+            nsample,
+            use_xyz,
+            normalize_xyz,
+        )
 
     def forward(self, xyz, new_xyz, features=None):
         # type: (QueryAndGroup, torch.Tensor. torch.Tensor, torch.Tensor) -> Tuple[Torch.Tensor]
@@ -315,6 +320,8 @@ class QueryAndGroup(nn.Module):
         xyz_trans = xyz.transpose(1, 2).contiguous()
         grouped_xyz = grouping_operation(xyz_trans, idx)  # (B, 3, npoint, nsample)
         grouped_xyz -= new_xyz.transpose(1, 2).unsqueeze(-1)
+        if self.normalize_xyz:
+            grouped_xyz /= self.radius
 
         if features is not None:
             grouped_features = grouping_operation(features, idx)
