@@ -211,6 +211,7 @@ __global__ void furthest_point_sampling_kernel(
     }
 
     old = dists_i[0];
+    __syncthreads();
     if (tid == 0) idx[j] = old;
   }
 }
