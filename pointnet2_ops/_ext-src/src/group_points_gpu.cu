@@ -7,26 +7,28 @@
 // input: points(b, c, n) idx(b, npoints, nsample)
 // output: out(b, c, npoints, nsample)
 template<typename scalar_t>
-__global__ void group_points_kernel(int b, int c, int n, int npoints,
-                                    int nsample,
-                                    const scalar_t *__restrict__ points,
-                                    const int *__restrict__ idx,
-                                    scalar_t *__restrict__ out) {
-  int batch_index = blockIdx.x;
-  points += batch_index * n * c;
-  idx += batch_index * npoints * nsample;
-  out += batch_index * npoints * nsample * c;
+__global__ void group_points_kernel(
+    int b,
+    int c,
+    int n,
+    int npoints,
+    int nsample,
+    const scalar_t *__restrict__ points,
+    const int *__restrict__ idx,
+    scalar_t *__restrict__ out) {
+  int bs_idx = blockIdx.z;
+  int c_idx = blockIdx.y;
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int pt_idx = index / nsample;
+  if (bs_idx >= b || c_idx >= c || pt_idx >= npoints) return;
 
-  const int index = threadIdx.y * blockDim.x + threadIdx.x;
-  const int stride = blockDim.y * blockDim.x;
-  for (int i = index; i < c * npoints; i += stride) {
-    const int l = i / npoints;
-    const int j = i % npoints;
-    for (int k = 0; k < nsample; ++k) {
-      int ii = idx[j * nsample + k];
-      out[(l * npoints + j) * nsample + k] = points[l * n + ii];
-    }
-  }
+  int sample_idx = index % nsample;
+
+  idx += bs_idx * npoints * nsample + pt_idx * nsample + sample_idx;
+  int in_idx = bs_idx * c * n + c_idx * n + idx[0];
+  int out_idx = bs_idx * c * npoints * nsample + c_idx * npoints * nsample + pt_idx * nsample + sample_idx;
+
+  out[out_idx] = points[in_idx];
 }
 
 at::Tensor group_points_kernel_wrapper(
@@ -70,22 +72,17 @@ __global__ void group_points_grad_kernel(
     const scalar_t *__restrict__ grad_out,
     const int *__restrict__ idx,
     scalar_t *__restrict__ grad_points) {
-  int batch_index = blockIdx.x;
-  grad_out += batch_index * npoints * nsample * c;
-  idx += batch_index * npoints * nsample;
-  grad_points += batch_index * n * c;
+  int bs_idx = blockIdx.z;
+  int c_idx = blockIdx.y;
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int pt_idx = index / nsample;
+  if (bs_idx >= b || c_idx >= c || pt_idx >= npoints) return;
 
-  const int index = threadIdx.y * blockDim.x + threadIdx.x;
-  const int stride = blockDim.y * blockDim.x;
-  for (int i = index; i < c * npoints; i += stride) {
-    const int l = i / npoints;
-    const int j = i % npoints;
-    for (int k = 0; k < nsample; ++k) {
-      int ii = idx[j * nsample + k];
-      atomicAdd(grad_points + l * n + ii,
-                grad_out[(l * npoints + j) * nsample + k]);
-    }
-  }
+  int sample_idx = index % nsample;
+  grad_out += bs_idx * c * npoints * nsample + c_idx * npoints * nsample + pt_idx * nsample + sample_idx;
+  idx += bs_idx * npoints * nsample + pt_idx * nsample + sample_idx;
+
+  atomicAdd(grad_points + bs_idx * c * n + c_idx * n + idx[0] , grad_out[0]);
 }
 
 at::Tensor group_points_grad_kernel_wrapper(
