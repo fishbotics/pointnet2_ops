@@ -17,35 +17,35 @@ __global__ void query_ball_point_kernel(
     const scalar_t *__restrict__ new_xyz,
     const scalar_t *__restrict__ xyz,
     int *__restrict__ idx) {
-  int batch_index = blockIdx.x;
-  xyz += batch_index * n * 3;
-  new_xyz += batch_index * m * 3;
-  idx += m * nsample * batch_index;
+  int bs_idx = blockIdx.y;
+  int pt_idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (bs_idx >= b || pt_idx >= m) return;
 
-  int index = threadIdx.x;
-  int stride = blockDim.x;
+  new_xyz += bs_idx * m * 3 + pt_idx * 3;
+  xyz += bs_idx * n * 3;
+  idx += bs_idx * m * nsample + pt_idx * nsample;
 
   float radius2 = radius * radius;
-  for (int j = index; j < m; j += stride) {
-    scalar_t new_x = new_xyz[j * 3 + 0];
-    scalar_t new_y = new_xyz[j * 3 + 1];
-    scalar_t new_z = new_xyz[j * 3 + 2];
-    for (int k = 0, cnt = 0; k < n && cnt < nsample; ++k) {
+  scalar_t new_x = new_xyz[0];
+  scalar_t new_y = new_xyz[1];
+  scalar_t new_z = new_xyz[2];
+
+  int cnt = 0;
+  for (int k = 0; k < n; ++k) {
       scalar_t x = xyz[k * 3 + 0];
       scalar_t y = xyz[k * 3 + 1];
       scalar_t z = xyz[k * 3 + 2];
-      scalar_t d2 = (new_x - x) * (new_x - x) + (new_y - y) * (new_y - y) +
-                 (new_z - z) * (new_z - z);
-      if (d2 < radius2) {
-        if (cnt == 0) {
-          for (int l = 0; l < nsample; ++l) {
-            idx[j * nsample + l] = k;
+      scalar_t d2 = (new_x - x) * (new_x - x) + (new_y - y) * (new_y - y) + (new_z - z) * (new_z - z);
+      if (d2 < radius2){
+          if (cnt == 0){
+              for (int l = 0; l < nsample; ++l) {
+                  idx[l] = k;
+              }
           }
-        }
-        idx[j * nsample + cnt] = k;
-        ++cnt;
+          idx[cnt] = k;
+          ++cnt;
+          if (cnt >= nsample) break;
       }
-    }
   }
 }
 
